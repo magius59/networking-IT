@@ -106,21 +106,13 @@ e non come *«la strada tra utente e ufficio postale».*
 
 *La porta 587 è la porta standard raccomandata per l’invio delle e-mail da parte dei client.*
 
-La porta TCP 587 è definita per il servizio di:
+La porta TCP 587 è definita per il servizio di `message submission` ed è regolata principalmente dalla RFC 6409
 
-message submission
+**Ruolo operativo**
 
-ed è regolata principalmente dalla RFC 6409
+In questo caso il client di posta (MUA) invia il messaggio al proprio server SMTP. Non si tratta quindi di relay tra server, ma di autenticazione dell’utente presso il server di submission.
 
-Ruolo operativo
-
-In questo caso:
-
-il client di posta (MUA) invia il messaggio al proprio server SMTP
-
-Non si tratta quindi di relay tra server, ma di autenticazione dell’utente presso il server di submission.
-
-Caratteristiche principali
+**Caratteristiche principali**
 
 Sulla porta 587:
 
@@ -184,7 +176,7 @@ Nel 2018 la RFC 8314 ha nuovamente raccomandato l’utilizzo della porta 465 per
 
 **TLS implicito vs TLS esplicito**
 
-Porta 587 – TLS esplicito (STARTTLS)
+**Porta 587 – TLS esplicito (STARTTLS)**
 
 Con STARTTLS:
 
@@ -194,7 +186,7 @@ Con STARTTLS:
 
 Questo approccio mantiene compatibilità con sistemi legacy ma può essere vulnerabile ad attacchi di downgrade.
 
-Porta 465 – TLS implicito
+**Porta 465 – TLS implicito**
 
 Con la porta 465:
 
@@ -238,13 +230,7 @@ viene utilizzata la porta 25 per il relay SMTP tra MTA.
 
 ## Sicurezza e attacchi STARTTLS
 
-Uno dei problemi storici della porta 587 riguarda gli attacchi:
-
-STARTTLS stripping
-
-In questo scenario un attaccante man-in-the-middle modifica il traffico SMTP eliminando il comando: STARTTLS
-
-In questo modo client e server continuano a comunicare in chiaro senza cifratura.
+Uno dei problemi storici della porta 587 riguarda gli attacchi di **STARTTLS stripping**. In questo scenario un attaccante man-in-the-middle modifica il traffico SMTP eliminando il comando `STARTTLS`. In questo modo client e server continuano a comunicare in chiaro senza cifratura.
 
 Con TLS implicito sulla porta 465 questo rischio è significativamente ridotto, poiché la sessione TLS viene stabilita immediatamente.
 
@@ -252,11 +238,9 @@ Con TLS implicito sulla porta 465 questo rischio è significativamente ridotto, 
 
 Nelle infrastrutture contemporanee:
 
-porta 25 → relay tra server
-
-porta 587 → submission standard autenticata
-
-porta 465 → submission con TLS implicito
+- `porta 25` → relay tra server
+- `porta 587` → submission standard autenticata
+- `porta 465` → submission con TLS implicito
 
 Molti provider supportano sia 587 sia 465.
 
@@ -332,13 +316,13 @@ La connessione:
 
 - viene successivamente cifrata.
 
-Porta tipica: 587/TCP
+Porta tipica: `587/TCP`
 
 **SMTPS (Implicit TLS)**
 
 La connessione TLS viene avviata immediatamente all’apertura della sessione TCP.
 
-Porta tipica: 465/TCP
+Porta tipica: `465/TCP`
 
 In questo caso non esiste una fase iniziale in chiaro.
 
@@ -366,9 +350,7 @@ Un attaccante in posizione Man-in-the-Middle potrebbe:
 
 - mantenere la comunicazione in chiaro.
 
-Questo tipo di attacco è noto come:
-
-STARTTLS Stripping
+Questo tipo di attacco è noto come **STARTTLS Stripping**.
 
 **Contromisure**
 
@@ -391,16 +373,19 @@ Per mitigare tali rischi vengono utilizzati:
 È possibile testare STARTTLS manualmente:
 
 **SMTP**
-
+```
 openssl s_client -starttls smtp -connect mail.example.com:587
+```
 
 **IMAP**
-
+```
 openssl s_client -starttls imap -connect mail.example.com:143
+```
 
 **POP3**
-
+```
 openssl s_client -starttls pop3 -connect mail.example.com:110
+```
 
 Questi comandi permettono di:
 
@@ -414,48 +399,39 @@ Questi comandi permettono di:
 
 SMTP usa una comunicazione testuale basata su comandi ASCII. La versione moderna usa EHLO al posto di HELO per segnalare il supporto alle estensioni ESMTP (Extended SMTP, RFC 5321).
 
-<table>
-<colgroup>
-<col style="width: 100% align=left" />
-</colgroup>
-<thead>
-<tr>
-<th><p>S: 220 mail.example.org ESMTP Postfix</p>
-<p>C: EHLO mail.mittente.com</p>
-<p>S: 250-mail.example.org</p>
-<p>S: 250-SIZE 52428800</p>
-<p>S: 250-STARTTLS</p>
-<p>S: 250-AUTH PLAIN LOGIN</p>
-<p>S: 250 8BITMIME</p>
-<p>C: STARTTLS</p>
-<p>S: 220 Ready to start TLS</p>
-<p>[negoziazione TLS - da qui in poi il traffico e cifrato]</p>
-<p>C: AUTH LOGIN</p>
-<p>S: 334 Username:</p>
-<p>C: [base64(username)]</p>
-<p>S: 334 Password:</p>
-<p>C: [base64(password)]</p>
-<p>S: 235 Authentication successful</p>
-<p>C: MAIL FROM:&lt;alice@mittente.com&gt;</p>
-<p>S: 250 Ok</p>
-<p>C: RCPT TO:&lt;bob@example.org&gt;</p>
-<p>S: 250 Ok</p>
-<p>C: DATA</p>
-<p>S: 354 End data with &lt;CR&gt;&lt;LF&gt;.&lt;CR&gt;&lt;LF&gt;</p>
-<p>C: Subject: Test</p>
-<p>C: From: alice@mittente.com</p>
-<p>C: To: bob@example.org</p>
-<p>C:</p>
-<p>C: Corpo del messaggio.</p>
-<p>C: .</p>
-<p>S: 250 Ok: queued as AB1234</p>
-<p>C: QUIT</p>
-<p>S: 221 Bye</p></th>
-</tr>
-</thead>
-<tbody>
-</tbody>
-</table>
+```
+S: 220 mail.example.org ESMTP Postfix
+C: EHLO mail.mittente.com
+S: 250-mail.example.org
+S: 250-SIZE 52428800
+S: 250-STARTTLS
+S: 250-AUTH PLAIN LOGIN
+S: 250 8BITMIME
+C: STARTTLS
+S: 220 Ready to start TLS
+[negoziazione TLS - da qui in poi il traffico e cifrato]
+C: AUTH LOGIN
+S: 334 Username:
+C: [base64(username)]
+S: 334 Password:
+C: [base64(password)]
+S: 235 Authentication successful
+C: MAIL FROM:<alice@mittente.com>
+S: 250 Ok
+C: RCPT TO:<bob@example.org>
+S: 250 Ok
+C: DATA
+S: 354 End data with <CR><LF>.<CR><LF>
+C: Subject: Test
+C: From: alice@mittente.com
+C: To: bob@example.org
+C:
+C: Corpo del messaggio.
+C: .
+S: 250 Ok: queued as AB1234
+C: QUIT
+S: 221 Bye
+```
 
 **Nota su HELO vs EHLO:** *HELO e il comando originale di SMTP (RFC 821, 1982). EHLO fu introdotto con ESMTP (RFC 1869, 1995) e permette al server di annunciare le estensioni supportate. Tutti i server moderni supportano EHLO; HELO è mantenuto per compatibilità.*
 
@@ -496,7 +472,7 @@ poiché supportano autenticazione e trasporto cifrato in maniera più sicura.
 
 **Esistono tool che cercano di sfruttare la porta 25 per attaccare i server SMTP?\**
 
-Si, ad esempio **smtp-user-enum** che serve per enumerare utenti validi usa comandi come VRFY, EXPN, RCPT TO. Viene usato per scoprire email valide in un dominio. Spesso le richieste vengono rifiutate sai server smtp.
+Si, ad esempio `smtp-user-enum` che serve per enumerare utenti validi usa comandi come VRFY, EXPN, RCPT TO. Viene usato per scoprire email valide in un dominio. Spesso le richieste vengono rifiutate sai server smtp.
 
 # 3. Evoluzione della sicurezza SMTP
 
@@ -540,93 +516,80 @@ Meccanismi comuni supportati da SMTP:
 
 **Nota:** *PLAIN e LOGIN trasmettono le credenziali in base64, che e una codifica e non una cifratura. Se usati su connessione non cifrata, le credenziali sono recuperabili in chiaro da chiunque intercetti il traffico. E’ obbligatorio usarli solo dopo STARTTLS o su connessione TLS implicita.*
 
-<table>
-<colgroup>
-<col style="width: 100%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Esercizio 1 - Analisi di una sessione SMTP</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><p>Data la seguente sessione SMTP (parziale), rispondere alle domande:</p>
-<table>
-<colgroup>
-<col style="width: 100%" />
-</colgroup>
-<thead>
-<tr>
-<th><p>220 mail.university.edu ESMTP</p>
-<p>EHLO mail.attacker.com</p>
-<p>250-mail.university.edu</p>
-<p>250-STARTTLS</p>
-<p>250 AUTH PLAIN LOGIN</p>
-<p>MAIL FROM:&lt;president@university.edu&gt;</p>
-<p>250 Ok</p>
-<p>RCPT TO:&lt;all-students@university.edu&gt;</p>
-<p>250 Ok</p>
-<p>DATA</p>
-<p>354 End data with &lt;CR&gt;&lt;LF&gt;.&lt;CR&gt;&lt;LF&gt;</p>
-<p>Subject: Avviso urgente</p>
-<p>From: Rettore &lt;president@university.edu&gt;</p>
-<p>To: all-students@university.edu</p>
-<p>Si comunica che le lezioni di domani sono sospese.</p>
-<p>.</p>
-<p>250 Ok: queued</p></th>
-</tr>
-</thead>
-<tbody>
-</tbody>
-</table>
-<p>Domande:</p>
-<ul>
-<li><p>Quale campo è stato falsificato?</p></li>
-<li><p>Quale vulnerabilità ha permesso questo invio?</p></li>
-<li><p>Come avrebbero potuto SPF, DKIM e DMARC bloccare o rilevare questo messaggio?</p></li>
-<li><p>Il server ha usato STARTTLS prima di ricevere MAIL FROM. Cosa implica questa assenza?</p></li>
-<li><p>Quali header aggiuntivi, presenti in un messaggio reale, avrebbero permesso di rilevare la frode?</p></li>
-</ul></td>
-</tr>
-</tbody>
-</table>
 
-<table>
-<colgroup>
-<col style="width: 100%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Soluzione</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><p><strong>1. Campo falsificato:</strong></p>
-<p>Il campo MAIL FROM: dell'envelope (alice@university.edu) e il campo From: dell'header (visualizzato dal client come mittente). Entrambi contengono un indirizzo del dominio university.edu, ma la connessione proviene da mail.attacker.com - un server non autorizzato per quel dominio.</p>
-<p><strong>2. Vulnerabilita sfruttata:<br />
-</strong>Il server ha accettato la connessione da un host esterno senza verificare che il dominio indicato in MAIL FROM fosse compatibile con l'IP sorgente (assenza di SPF enforcement). Inoltre non e stato richiesto AUTH prima di accettare MAIL FROM: il server si comporta come open relay parziale.</p>
-<p><strong>3. SPF, DKIM, DMARC:<br />
-</strong>Ne vedremo in dettaglio le caratteristico più avanti in questo capitolo. <strong><br />
-</strong>Per ora osserviamo che si tratta di metodi per garantire l’identità del mail server mittente.</p>
-<ul>
-<li><p>SPF: un record SPF per university.edu autorizzerebbe solo gli IP dei mail server legittimi. La connessione da mail.attacker.com fallisce il check SPF (risultato 'fail' o 'softfail').</p></li>
-<li><p>DKIM: il messaggio non porta una firma DKIM valida per university.edu (il server attaccante non ha la chiave privata del dominio). Il destinatario trova 'DKIM=none' o 'DKIM=fail'.</p></li>
-<li><p>DMARC: con policy 'reject' o 'quarantine', un messaggio che fallisce SPF e DKIM viene rifiutato o messo in spam automaticamente, indipendentemente dal campo From:.</p></li>
-</ul>
-<p><strong>4. Assenza di STARTTLS:<br />
-</strong>La sessione e avvenuta in chiaro sulla rete. Chiunque intercetti il traffico (attacco MITM o packet capture) puo leggere il contenuto del messaggio e gli header. Inoltre, se il server supporta AUTH ma non ha richiesto STARTTLS prima, le credenziali saranno trasmesse in chiaro.</p>
-<p><strong>5. Header rivelatori:</strong></p>
-<ul>
-<li><p>Received: ogni MTA attraversato aggiunge un header Received: con IP sorgente, hostname e timestamp. Analizzando la catena di Received si risale al vero server di origine (mail.attacker.com).</p></li>
-<li><p>Return-Path: contiene l'envelope sender reale (quello di MAIL FROM), che potrebbe differire dal From: dell'header.</p></li>
-<li><p>Authentication-Results: aggiunto dai sistemi di filtraggio, riporta i risultati di SPF, DKIM e DMARC.</p></li>
-<li><p>X-Originating-IP: header non standard aggiunto da alcuni server per tracciare l'IP del client originante.</p></li>
-</ul></td>
-</tr>
-</tbody>
-</table>
+> **Esercizio 1 - Analisi di una sessione SMTP**
+>
+> Data la seguente sessione SMTP (parziale), rispondere alle domande:
+>
+> ```
+> 220 mail.university.edu ESMTP
+> EHLO mail.attacker.com
+> 250-mail.university.edu
+> 250-STARTTLS
+> 250 AUTH PLAIN LOGIN
+> MAIL FROM:
+> 250 Ok
+> RCPT TO:
+> 250 Ok
+> DATA
+> 354 End data with .
+> Subject: Avviso urgente
+> From: Rettore 
+> To: all-students@university.edu
+> Si comunica che le lezioni di domani sono sospese.
+> .
+> 250 Ok: queued
+> ```
+> Domande:
+>
+> - Quale campo è stato falsificato?
+>
+> - Quale vulnerabilità ha permesso questo invio?
+>
+> - Come avrebbero potuto SPF, DKIM e DMARC bloccare o rilevare questo messaggio?
+>
+> - Il server ha usato STARTTLS prima di ricevere MAIL FROM. Cosa implica questa assenza?
+>
+> - Quali header aggiuntivi, presenti in un messaggio reale, avrebbero permesso di rilevare la frode?
+
+
+
+> **Soluzione**
+>
+> **1. Campo falsificato:**
+>
+> Il campo MAIL FROM: dell'envelope (alice@university.edu) e il campo From: dell'header (visualizzato dal client come mittente). Entrambi contengono un indirizzo del dominio university.edu, ma la connessione proviene da mail.attacker.com - un server non autorizzato per quel dominio.
+>
+> **2. Vulnerabilita sfruttata:**
+> **
+> **Il server ha accettato la connessione da un host esterno senza verificare che il dominio indicato in MAIL FROM fosse compatibile con l'IP sorgente (assenza di SPF enforcement). Inoltre non e stato richiesto AUTH prima di accettare MAIL FROM: il server si comporta come open relay parziale.
+>
+> **3. SPF, DKIM, DMARC:**
+> **
+> **Ne vedremo in dettaglio le caratteristico più avanti in questo capitolo. 
+> **
+> **Per ora osserviamo che si tratta di metodi per garantire l’identità del mail server mittente.
+>
+> - SPF: un record SPF per university.edu autorizzerebbe solo gli IP dei mail server legittimi. La connessione da mail.attacker.com fallisce il check SPF (risultato 'fail' o 'softfail').
+>
+> - DKIM: il messaggio non porta una firma DKIM valida per university.edu (il server attaccante non ha la chiave privata del dominio). Il destinatario trova 'DKIM=none' o 'DKIM=fail'.
+>
+> - DMARC: con policy 'reject' o 'quarantine', un messaggio che fallisce SPF e DKIM viene rifiutato o messo in spam automaticamente, indipendentemente dal campo From:.
+>
+> **4. Assenza di STARTTLS:**
+> **
+> **La sessione e avvenuta in chiaro sulla rete. Chiunque intercetti il traffico (attacco MITM o packet capture) puo leggere il contenuto del messaggio e gli header. Inoltre, se il server supporta AUTH ma non ha richiesto STARTTLS prima, le credenziali saranno trasmesse in chiaro.
+>
+> **5. Header rivelatori:**
+>
+> - Received: ogni MTA attraversato aggiunge un header Received: con IP sorgente, hostname e timestamp. Analizzando la catena di Received si risale al vero server di origine (mail.attacker.com).
+>
+> - Return-Path: contiene l'envelope sender reale (quello di MAIL FROM), che potrebbe differire dal From: dell'header.
+>
+> - Authentication-Results: aggiunto dai sistemi di filtraggio, riporta i risultati di SPF, DKIM e DMARC.
+>
+> - X-Originating-IP: header non standard aggiunto da alcuni server per tracciare l'IP del client originante.
+
 
 # 4. Protocolli di accesso alla mailbox: POP3 e IMAP
 
@@ -648,36 +611,27 @@ Dopo la consegna della posta al server destinatario, il client dell'utente usa u
 
 Una sessione POP3 e strutturata in tre fasi: autorizzazione, transazione e aggiornamento.
 
-<table>
-<colgroup>
-<col style="width: 100%" />
-</colgroup>
-<thead>
-<tr>
-<th><p>+OK POP3 server ready</p>
-<p>USER alice</p>
-<p>+OK</p>
-<p>PASS secretpassword</p>
-<p>+OK Logged in</p>
-<p>LIST</p>
-<p>+OK 3 messages:</p>
-<p>1 1024</p>
-<p>2 2048</p>
-<p>3 512</p>
-<p>.</p>
-<p>RETR 1</p>
-<p>+OK 1024 octets</p>
-<p>[contenuto del messaggio 1]</p>
-<p>.</p>
-<p>DELE 1</p>
-<p>+OK Message 1 deleted</p>
-<p>QUIT</p>
-<p>+OK Bye</p></th>
-</tr>
-</thead>
-<tbody>
-</tbody>
-</table>
+```
++OK POP3 server ready
+USER alice
++OK
+PASS secretpassword
++OK Logged in
+LIST
++OK 3 messages:
+1 1024
+2 2048
+3 512
+.
+RETR 1
++OK 1024 octets
+[contenuto del messaggio 1]
+.
+DELE 1
++OK Message 1 deleted
+QUIT
++OK Bye
+```
 
 Comandi POP3 principali:
 
@@ -733,36 +687,27 @@ MIME introduce header aggiuntivi nel messaggio:
 
 Un messaggio MIME puo contenere piu parti separate da un boundary, una stringa univoca scelta dal mittente.
 
-<table>
-<colgroup>
-<col style="width: 100%" />
-</colgroup>
-<thead>
-<tr>
-<th><p>MIME-Version: 1.0</p>
-<p>Content-Type: multipart/mixed; boundary="----=_Part_12345"</p>
-<p>------=_Part_12345</p>
-<p>Content-Type: multipart/alternative; boundary="----=_Alt_67890"</p>
-<p>------=_Alt_67890</p>
-<p>Content-Type: text/plain; charset=UTF-8</p>
-<p>Content-Transfer-Encoding: quoted-printable</p>
-<p>Testo del messaggio in formato plain.</p>
-<p>------=_Alt_67890</p>
-<p>Content-Type: text/html; charset=UTF-8</p>
-<p>Content-Transfer-Encoding: quoted-printable</p>
-<p>&lt;html&gt;&lt;body&gt;&lt;p&gt;Testo del messaggio in &lt;b&gt;HTML&lt;/b&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</p>
-<p>------=_Alt_67890--</p>
-<p>------=_Part_12345</p>
-<p>Content-Type: application/pdf; name="documento.pdf"</p>
-<p>Content-Transfer-Encoding: base64</p>
-<p>Content-Disposition: attachment; filename="documento.pdf"</p>
-<p>JVBERi0xLjQKJeLjz9MKMSAwIG9iag... [base64 del PDF]</p>
-<p>------=_Part_12345--</p></th>
-</tr>
-</thead>
-<tbody>
-</tbody>
-</table>
+```
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="----=_Part_12345"
+------=_Part_12345
+Content-Type: multipart/alternative; boundary="----=_Alt_67890"
+------=_Alt_67890
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Testo del messaggio in formato plain.
+------=_Alt_67890
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+<html><body><p>Testo del messaggio in <b>HTML</b>.</p></body></html>
+------=_Alt_67890--
+------=_Part_12345
+Content-Type: application/pdf; name="documento.pdf"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="documento.pdf"
+JVBERi0xLjQKJeLjz9MKMSAwIG9iag... [base64 del PDF]
+------=_Part_12345--
+```
 
 Tipi MIME multipart comuni:
 
@@ -837,24 +782,15 @@ Ogni e-mail contiene un blocco di header separato dal corpo da una riga vuota. G
 
 La catena di header Received: e lo strumento principale per tracciare il percorso reale di un messaggio. Ogni MTA che riceve e ritrasmette un messaggio aggiunge un header Received: in cima alla lista (il piu recente e in alto). L'analisi si legge dal basso verso l'alto: il Received: più in basso è quello aggiunto dal primo server che ha ricevuto la mail.
 
-<table>
-<colgroup>
-<col style="width: 100%" />
-</colgroup>
-<thead>
-<tr>
-<th><p>Received: from mail.legitimate.com (mail.legitimate.com [198.51.100.10])</p>
-<p>by mx.destinatario.com with ESMTPS id abc123</p>
-<p>for &lt;user@destinatario.com&gt;;</p>
-<p>Mon, 9 May 2026 10:23:14 +0000</p>
-<p>Received: from [192.168.1.50] (unknown)</p>
-<p>by mail.legitimate.com with ESMTP id xyz456;</p>
-<p>Mon, 9 May 2026 10:23:10 +0000</p></th>
-</tr>
-</thead>
-<tbody>
-</tbody>
-</table>
+```
+Received: from mail.legitimate.com (mail.legitimate.com [198.51.100.10])
+by mx.destinatario.com with ESMTPS id abc123
+for <user@destinatario.com>;
+Mon, 9 May 2026 10:23:14 +0000
+Received: from [192.168.1.50] (unknown)
+by mail.legitimate.com with ESMTP id xyz456;
+Mon, 9 May 2026 10:23:10 +0000
+```
 
 In questo esempio: il messaggio e passato prima per 192.168.1.50 (IP del client mittente), poi per mail.legitimate.com, poi per mx.destinatario.com. L'IP del client originante (192.168.1.50) e spesso il dato piu utile per l'analisi forense.
 
@@ -892,8 +828,9 @@ SPF (RFC 7208, 2014) permette al proprietario di un dominio di dichiarare nel DN
 
 Esempio di record SPF nel DNS:
 
-| example.com. IN TXT "v=spf1 ip4:192.0.2.10 ip4:192.0.2.11 include:\_spf.google.com ~all" |
-|----|
+```
+example.com. IN TXT "v=spf1 ip4:192.0.2.10 ip4:192.0.2.11 include:_spf.google.com ~all"
+```
 
 Meccanismi SPF principali:
 
@@ -943,22 +880,13 @@ Processo di firma e verifica:
 
 Esempio di header DKIM-Signature:
 
-<table>
-<colgroup>
-<col style="width: 100%" />
-</colgroup>
-<thead>
-<tr>
-<th><p>DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;</p>
-<p>d=example.com; s=mail2024;</p>
-<p>h=from:to:subject:date:message-id;</p>
-<p>bh=47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=;</p>
-<p>b=AbCdEf....[firma base64]....XyZ=</p></th>
-</tr>
-</thead>
-<tbody>
-</tbody>
-</table>
+```
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+d=example.com; s=mail2024;
+h=from:to:subject:date:message-id;
+bh=47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=;
+b=AbCdEf....[firma base64]....XyZ=
+```
 
 Parametri chiave:
 
@@ -988,20 +916,11 @@ DMARC richiede che il dominio nel campo From: (header) sia allineato con:
 
 Esempio di record DMARC nel DNS:
 
-<table>
-<colgroup>
-<col style="width: 100%" />
-</colgroup>
-<thead>
-<tr>
-<th><p>_dmarc.example.com. IN TXT "v=DMARC1; p=reject; sp=quarantine; pct=100;</p>
-<p>rua=mailto:dmarc-reports@example.com;</p>
-<p>ruf=mailto:forensic@example.com; adkim=r; aspf=r"</p></th>
-</tr>
-</thead>
-<tbody>
-</tbody>
-</table>
+```
+_dmarc.example.com. IN TXT "v=DMARC1; p=reject; sp=quarantine; pct=100;
+rua=mailto:dmarc-reports@example.com;
+ruf=mailto:forensic@example.com; adkim=r; aspf=r"
+```
 
 Parametri principali:
 
@@ -1029,71 +948,55 @@ Le tre policy DMARC e le loro implicazioni operative:
 
 **Deployment progressivo:** *La raccomandazione per l'adozione di DMARC e incrementale: iniziare con p=none per raccogliere report e verificare che tutta la posta legittima superi SPF e DKIM, poi passare a quarantine, infine a reject. Un deployment affrettato con reject puo bloccare mail legittime.*
 
-<table>
-<colgroup>
-<col style="width: 100%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Esercizio 3 - Analisi SPF, DKIM e DMARC</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><p>Un'azienda ha configurato i seguenti record DNS:</p>
-<table>
-<colgroup>
-<col style="width: 100%" />
-</colgroup>
-<thead>
-<tr>
-<th><p>company.com. IN TXT "v=spf1 ip4:203.0.113.5 include:sendgrid.net ~all"</p>
-<p>_dmarc.company.com IN TXT "v=DMARC1; p=quarantine; pct=50; rua=mailto:dmarc@company.com"</p></th>
-</tr>
-</thead>
-<tbody>
-</tbody>
-</table>
-<p>Un attaccante invia una mail con From: ceo@company.com dal proprio server 45.33.32.156, senza firma DKIM.</p>
-<p>Domande:</p>
-<ul>
-<li><p>Qual e il risultato del check SPF per questa mail?</p></li>
-<li><p>Qual e il risultato del check DKIM?</p></li>
-<li><p>Come si comporta DMARC? La mail viene consegnata?</p></li>
-<li><p>Cosa significa pct=50 nel record DMARC?</p></li>
-<li><p>Suggerisci come rafforzare la configurazione per la massima protezione.</p></li>
-</ul></td>
-</tr>
-</tbody>
-</table>
 
-<table>
-<colgroup>
-<col style="width: 100%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Soluzione</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><p><strong>1. SPF:</strong> L'IP 45.33.32.156 non e tra quelli autorizzati (203.0.113.5 o quelli di sendgrid.net). Il qualificatore ~all produce un risultato 'softfail': il messaggio non viene rifiutato automaticamente da SPF, ma viene marcato come sospetto.</p>
-<p><strong>2. DKIM:</strong> Non essendoci firma DKIM, il risultato e 'none'. Non c'e alcuna firma da verificare. Il check DKIM fallisce per assenza.</p>
-<p><strong>3. DMARC:</strong> Entrambi i check di autenticazione (SPF softfail, DKIM none) non producono un 'pass' allineato con il dominio company.com nel campo From:. DMARC fallisce. Con p=quarantine e pct=50, il 50% dei messaggi falliti viene messo in quarantena (spam); il rimanente 50% viene consegnato normalmente. La mail potrebbe essere consegnata se rientra nel 50% non soggetto alla policy in questo deployment parziale.</p>
-<p><strong>4. pct=50:</strong> Il parametro pct indica la percentuale di messaggi NON autenticati a cui applicare la policy DMARC. Con pct=50, la meta dei messaggi che falliscono DMARC vengono messi in quarantena; l'altra meta viene consegnata normalmente. Serve per un rollout graduale che riduce il rischio di bloccare mail legittime.</p>
-<p><strong>5. Rafforzamento consigliato:</strong></p>
-<ul>
-<li><p>Cambiare ~all in -all nel record SPF: da softfail a fail esplicito, segnalando chiaramente che gli IP non autorizzati non devono essere accettati.</p></li>
-<li><p>Configurare la firma DKIM su tutti i mail server che inviano per company.com (incluso SendGrid con signing domain alignment).</p></li>
-<li><p>Raccogliere e analizzare i report DMARC (rua=) per verificare che tutta la posta legittima superi i check.</p></li>
-<li><p>Aumentare pct a 100 dopo aver verificato i report.</p></li>
-<li><p>Cambiare p=quarantine in p=reject per la massima protezione, una volta accertato che non ci sono mail legittime bloccate.</p></li>
-<li><p>Considerare MTA-STS (RFC 8461) per forzare TLS sulle connessioni SMTP in ingresso e prevenire attacchi di downgrade su STARTTLS.</p></li>
-</ul></td>
-</tr>
-</tbody>
-</table>
+> **Esercizio 3 - Analisi SPF, DKIM e DMARC**
+>
+> Un'azienda ha configurato i seguenti record DNS:
+>
+> ```
+> company.com. IN TXT "v=spf1 ip4:203.0.113.5 include:sendgrid.net ~all"
+> _dmarc.company.com IN TXT "v=DMARC1; p=quarantine; pct=50; rua=mailto:dmarc@company.com"
+> ```
+> Un attaccante invia una mail con From: ceo@company.com dal proprio server 45.33.32.156, senza firma DKIM.
+>
+> Domande:
+>
+> - Qual e il risultato del check SPF per questa mail?
+>
+> - Qual e il risultato del check DKIM?
+>
+> - Come si comporta DMARC? La mail viene consegnata?
+>
+> - Cosa significa pct=50 nel record DMARC?
+>
+> - Suggerisci come rafforzare la configurazione per la massima protezione.
+
+
+
+> **Soluzione**
+>
+> **1. SPF:** L'IP 45.33.32.156 non e tra quelli autorizzati (203.0.113.5 o quelli di sendgrid.net). Il qualificatore ~all produce un risultato 'softfail': il messaggio non viene rifiutato automaticamente da SPF, ma viene marcato come sospetto.
+>
+> **2. DKIM:** Non essendoci firma DKIM, il risultato e 'none'. Non c'e alcuna firma da verificare. Il check DKIM fallisce per assenza.
+>
+> **3. DMARC:** Entrambi i check di autenticazione (SPF softfail, DKIM none) non producono un 'pass' allineato con il dominio company.com nel campo From:. DMARC fallisce. Con p=quarantine e pct=50, il 50% dei messaggi falliti viene messo in quarantena (spam); il rimanente 50% viene consegnato normalmente. La mail potrebbe essere consegnata se rientra nel 50% non soggetto alla policy in questo deployment parziale.
+>
+> **4. pct=50:** Il parametro pct indica la percentuale di messaggi NON autenticati a cui applicare la policy DMARC. Con pct=50, la meta dei messaggi che falliscono DMARC vengono messi in quarantena; l'altra meta viene consegnata normalmente. Serve per un rollout graduale che riduce il rischio di bloccare mail legittime.
+>
+> **5. Rafforzamento consigliato:**
+>
+> - Cambiare ~all in -all nel record SPF: da softfail a fail esplicito, segnalando chiaramente che gli IP non autorizzati non devono essere accettati.
+>
+> - Configurare la firma DKIM su tutti i mail server che inviano per company.com (incluso SendGrid con signing domain alignment).
+>
+> - Raccogliere e analizzare i report DMARC (rua=) per verificare che tutta la posta legittima superi i check.
+>
+> - Aumentare pct a 100 dopo aver verificato i report.
+>
+> - Cambiare p=quarantine in p=reject per la massima protezione, una volta accertato che non ci sono mail legittime bloccate.
+>
+> - Considerare MTA-STS (RFC 8461) per forzare TLS sulle connessioni SMTP in ingresso e prevenire attacchi di downgrade su STARTTLS.
+
 
 # 8. Servizi di Threat Intelligence e Reputation
 
@@ -1167,94 +1070,85 @@ HIBP espone anche un'API pubblica usata da browser (Firefox Monitor, Chrome) per
 
 AlienVault OTX (Open Threat Exchange), ora parte di AT&T Cybersecurity, e una piattaforma collaborativa di threat intelligence in cui ricercatori e organizzazioni condividono indicatori di compromissione (IoC) sotto forma di 'pulse' (collezioni di IoC correlati). Ogni pulse puo contenere IP, domini, hash, URL e CVE correlati a una campagna o a un malware specifico.
 
-<table>
-<colgroup>
-<col style="width: 100%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Esercizio 4 - Analisi header e threat intelligence</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><p>Uno studente riceve una mail sospetta con i seguenti header (estratto):</p>
-<table>
-<colgroup>
-<col style="width: 100%" />
-</colgroup>
-<thead>
-<tr>
-<th><p>Received: from mail-eu1.suspicious-domain.ru (mail-eu1.suspicious-domain.ru [185.220.101.45])</p>
-<p>by mx.university.edu with ESMTP;</p>
-<p>Mon, 9 May 2026 08:14:22 +0000</p>
-<p>From: IT Support &lt;itsupport@university.edu&gt;</p>
-<p>Reply-To: helpdesk-reset@gmail.com</p>
-<p>Subject: Urgent: Your account will be suspended</p>
-<p>Authentication-Results: mx.university.edu;</p>
-<p>spf=fail (sender IP 185.220.101.45 is not permitted)</p>
-<p>dkim=none</p>
-<p>dmarc=fail action=quarantine</p></th>
-</tr>
-</thead>
-<tbody>
-</tbody>
-</table>
-<p>Domande:</p>
-<ul>
-<li><p>Elenca almeno quattro indicatori che segnalano questa mail come phishing.</p></li>
-<li><p>Quali strumenti di threat intelligence useresti per approfondire l'analisi sull'IP 185.220.101.45 e sul dominio suspicious-domain.ru?</p></li>
-<li><p>L'universita ha DMARC con p=quarantine. Perche la mail e comunque arrivata nella casella dell'utente?</p></li>
-<li><p>Cosa suggerisce il campo Reply-To: helpdesk-reset@gmail.com?</p></li>
-<li><p>Se l'utente clicca sul link nel corpo della mail, quali rischi incontra?</p></li>
-</ul></td>
-</tr>
-</tbody>
-</table>
 
-<table>
-<colgroup>
-<col style="width: 100%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Soluzione</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><p><strong>1. Indicatori di phishing:</strong></p>
-<ul>
-<li><p>SPF fail: il server 185.220.101.45 non e autorizzato a inviare per university.edu.</p></li>
-<li><p>DKIM none: nessuna firma DKIM - un server legittimo di una grande universita avrebbe quasi certamente DKIM.</p></li>
-<li><p>DMARC fail: entrambi i check falliscono, confermando che il mittente non e il dominio university.edu.</p></li>
-<li><p>Reply-To anomalo: le risposte andrebbero a helpdesk-reset@gmail.com, non a un indirizzo istituzionale. Questo e un classico indicatore di phishing con harvest delle credenziali.</p></li>
-<li><p>Dominio mittente .ru: il TLD .ru non ha correlazione con una universita (presumibilmente non russa).</p></li>
-<li><p>Oggetto urgente ('Urgent', 'suspended'): tecnica di social engineering per indurre azione immediata impulsiva.</p></li>
-<li><p>IP nel range Tor exit node: 185.220.101.0/24 e un range noto per exit node Tor, usato per anonimizzare attivita malevole.</p></li>
-</ul>
-<p><strong>2. Strumenti di threat intelligence:</strong></p>
-<ul>
-<li><p>VirusTotal: analisi dell'IP 185.220.101.45 e del dominio suspicious-domain.ru per vedere le detection degli AV e lo storico.</p></li>
-<li><p>Cisco Talos: reputation lookup dell'IP e del dominio, volume e-mail, storico.</p></li>
-<li><p>Spamhaus ZEN: verifica se l'IP e in blocklist (probabilmente si trovera in SBL o XBL).</p></li>
-<li><p>AbuseIPDB: database collaborativo di segnalazioni di abuso per IP.</p></li>
-<li><p>WHOIS: informazioni su registrazione del dominio, data di creazione (dominio giovane = sospetto).</p></li>
-<li><p>Shodan: servizi esposti sull'IP 185.220.101.45.</p></li>
-</ul>
-<p><strong>3. Perche la mail e arrivata con p=quarantine:</strong> DMARC con p=quarantine non rifiuta il messaggio a livello SMTP: lo consegna nella cartella spam/quarantena. Se il client mail o il sistema di posta non separa correttamente la quarantena dalla posta normale, l'utente potrebbe vederla nella inbox. Inoltre, con pct&lt;100 una percentuale di messaggi potrebbe bypassare la policy. Solo p=reject blocca definitivamente il messaggio a livello SMTP prima della consegna.</p>
-<p><strong>4. Reply-To: helpdesk-reset@gmail.com:</strong> Il campo Reply-To: reindirizza le risposte dell'utente verso un indirizzo controllato dall'attaccante (helpdesk-reset@gmail.com), non verso l'istituzione impersonata. Questo permette all'attaccante di raccogliere le risposte degli utenti che rispondono senza cliccare sul link. E una tecnica comune per phishing tramite risposta (es. CEO fraud, 'rispondimi con le tue credenziali').</p>
-<p><strong>5. Rischi se si clicca il link:</strong></p>
-<ul>
-<li><p>Furto di credenziali: landing page che imita il portale di autenticazione dell'universita.</p></li>
-<li><p>Download di malware (drive-by download) tramite exploit del browser o plugin.</p></li>
-<li><p>Esecuzione di script JavaScript malevoli (XSS stored su sito compromesso).</p></li>
-<li><p>Fingerprinting del browser: raccolta di informazioni sul sistema dell'utente.</p></li>
-<li><p>Redirect a catena verso URL sempre piu nascosti per eludere i filtri.</p></li>
-</ul></td>
-</tr>
-</tbody>
-</table>
+> **Esercizio 4 - Analisi header e threat intelligence**
+>
+> Uno studente riceve una mail sospetta con i seguenti header (estratto):
+>
+> ```
+> Received: from mail-eu1.suspicious-domain.ru (mail-eu1.suspicious-domain.ru [185.220.101.45])
+> by mx.university.edu with ESMTP;
+> Mon, 9 May 2026 08:14:22 +0000
+> From: IT Support 
+> Reply-To: helpdesk-reset@gmail.com
+> Subject: Urgent: Your account will be suspended
+> Authentication-Results: mx.university.edu;
+> spf=fail (sender IP 185.220.101.45 is not permitted)
+> dkim=none
+> dmarc=fail action=quarantine
+> ```
+> Domande:
+>
+> - Elenca almeno quattro indicatori che segnalano questa mail come phishing.
+>
+> - Quali strumenti di threat intelligence useresti per approfondire l'analisi sull'IP 185.220.101.45 e sul dominio suspicious-domain.ru?
+>
+> - L'universita ha DMARC con p=quarantine. Perche la mail e comunque arrivata nella casella dell'utente?
+>
+> - Cosa suggerisce il campo Reply-To: helpdesk-reset@gmail.com?
+>
+> - Se l'utente clicca sul link nel corpo della mail, quali rischi incontra?
+
+
+
+> **Soluzione**
+>
+> **1. Indicatori di phishing:**
+>
+> - SPF fail: il server 185.220.101.45 non e autorizzato a inviare per university.edu.
+>
+> - DKIM none: nessuna firma DKIM - un server legittimo di una grande universita avrebbe quasi certamente DKIM.
+>
+> - DMARC fail: entrambi i check falliscono, confermando che il mittente non e il dominio university.edu.
+>
+> - Reply-To anomalo: le risposte andrebbero a helpdesk-reset@gmail.com, non a un indirizzo istituzionale. Questo e un classico indicatore di phishing con harvest delle credenziali.
+>
+> - Dominio mittente .ru: il TLD .ru non ha correlazione con una universita (presumibilmente non russa).
+>
+> - Oggetto urgente ('Urgent', 'suspended'): tecnica di social engineering per indurre azione immediata impulsiva.
+>
+> - IP nel range Tor exit node: 185.220.101.0/24 e un range noto per exit node Tor, usato per anonimizzare attivita malevole.
+>
+> **2. Strumenti di threat intelligence:**
+>
+> - VirusTotal: analisi dell'IP 185.220.101.45 e del dominio suspicious-domain.ru per vedere le detection degli AV e lo storico.
+>
+> - Cisco Talos: reputation lookup dell'IP e del dominio, volume e-mail, storico.
+>
+> - Spamhaus ZEN: verifica se l'IP e in blocklist (probabilmente si trovera in SBL o XBL).
+>
+> - AbuseIPDB: database collaborativo di segnalazioni di abuso per IP.
+>
+> - WHOIS: informazioni su registrazione del dominio, data di creazione (dominio giovane = sospetto).
+>
+> - Shodan: servizi esposti sull'IP 185.220.101.45.
+>
+> **3. Perche la mail e arrivata con p=quarantine:** DMARC con p=quarantine non rifiuta il messaggio a livello SMTP: lo consegna nella cartella spam/quarantena. Se il client mail o il sistema di posta non separa correttamente la quarantena dalla posta normale, l'utente potrebbe vederla nella inbox. Inoltre, con pct<100 una percentuale di messaggi potrebbe bypassare la policy. Solo p=reject blocca definitivamente il messaggio a livello SMTP prima della consegna.
+>
+> **4. Reply-To: helpdesk-reset@gmail.com:** Il campo Reply-To: reindirizza le risposte dell'utente verso un indirizzo controllato dall'attaccante (helpdesk-reset@gmail.com), non verso l'istituzione impersonata. Questo permette all'attaccante di raccogliere le risposte degli utenti che rispondono senza cliccare sul link. E una tecnica comune per phishing tramite risposta (es. CEO fraud, 'rispondimi con le tue credenziali').
+>
+> **5. Rischi se si clicca il link:**
+>
+> - Furto di credenziali: landing page che imita il portale di autenticazione dell'universita.
+>
+> - Download di malware (drive-by download) tramite exploit del browser o plugin.
+>
+> - Esecuzione di script JavaScript malevoli (XSS stored su sito compromesso).
+>
+> - Fingerprinting del browser: raccolta di informazioni sul sistema dell'utente.
+>
+> - Redirect a catena verso URL sempre piu nascosti per eludere i filtri.
+
 
 # 9. Architettura stratificata delle reti
 
@@ -1336,95 +1230,82 @@ RFC rilevanti per questa lezione:
 
 Le RFC sono accessibili gratuitamente su https://www.rfc-editor.org. Ogni RFC ha un numero progressivo univoco; i numeri non vengono riutilizzati. Quando uno standard viene aggiornato, viene pubblicata una nuova RFC che 'obsoletes' la precedente.
 
-<table>
-<colgroup>
-<col style="width: 100%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Esercizio 5 - Analisi completa di un'e-mail sospetta</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><p>Un utente riceve la seguente e-mail. Analizzare la struttura tecnica e identificare tutti gli elementi rilevanti per la sicurezza.</p>
-<table>
-<colgroup>
-<col style="width: 100%" />
-</colgroup>
-<thead>
-<tr>
-<th><p>Received: from smtp.paypaI-security.com (smtp.paypaI-security.com [91.108.4.200])</p>
-<p>by mx.victim.com with ESMTP;</p>
-<p>Mon, 9 May 2026 14:33:01 +0000</p>
-<p>MIME-Version: 1.0</p>
-<p>Content-Type: multipart/alternative; boundary="boundary123"</p>
-<p>From: PayPal Security &lt;security@paypal.com&gt;</p>
-<p>Reply-To: security@paypaI-security.com</p>
-<p>Subject: Your account has been limited</p>
-<p>Authentication-Results: mx.victim.com;</p>
-<p>spf=none dkim=none dmarc=none</p>
-<p>Message-ID: &lt;abc@paypaI-security.com&gt;</p>
-<p>--boundary123</p>
-<p>Content-Type: text/plain</p>
-<p>Dear Customer, your account has been limited. Click here: http://paypaI-security.com/verify</p>
-<p>--boundary123</p>
-<p>Content-Type: text/html</p>
-<p>&lt;html&gt;&lt;body&gt;Dear Customer, your account has been &lt;b&gt;limited&lt;/b&gt;.</p>
-<p>&lt;a href='http://paypaI-security.com/verify'&gt;Click here to verify&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;</p>
-<p>--boundary123--</p></th>
-</tr>
-</thead>
-<tbody>
-</tbody>
-</table>
-<p>Domande:</p>
-<ul>
-<li><p>Identifica il typosquatting nel dominio del mittente e nell'URL.</p></li>
-<li><p>Cosa indicano i risultati 'spf=none dkim=none dmarc=none'?</p></li>
-<li><p>Il messaggio ha struttura multipart/alternative. Qual e la ragione tecnica di questa scelta da parte degli attaccanti?</p></li>
-<li><p>Quali altri IoC (Indicators of Compromise) sono presenti?</p></li>
-<li><p>Come verificheresti l'URL http://paypaI-security.com/verify prima di aprirlo?</p></li>
-</ul></td>
-</tr>
-</tbody>
-</table>
 
-<table>
-<colgroup>
-<col style="width: 100%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Soluzione</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><p><strong>1. Typosquatting:</strong> Il dominio paypaI-security.com usa la lettera maiuscola 'I' (i maiuscola) al posto della lettera 'l' (elle minuscola) nella parola 'Paypal'. Molti font non distinguono visivamente 'I' da 'l'. Il dominio e completamente diverso da paypal.com ma visivamente quasi identico. La stessa sostituzione appare nel Reply-To e nell'URL del link. Questa tecnica si chiama IDN homograph attack o lookalike domain.</p>
-<p><strong>2. spf=none dkim=none dmarc=none:</strong> Tutti e tre i valori 'none' indicano che il dominio paypal.com (o paypaI-security.com) non ha pubblicato record SPF, DKIM ne DMARC. In realta paypal.com ha tutti e tre configurati con p=reject: questi risultati 'none' si riferiscono al dominio falsificato (paypaI-security.com) che probabilmente non ha record DNS di autenticazione configurati, o il server ha verificato il dominio sbagliato. In ogni caso, l'assenza di autenticazione positiva per un'email da un grande provider finanziario e un forte segnale di allarme.</p>
-<p><strong>3. Struttura multipart/alternative:</strong> Gli attaccanti usano multipart/alternative (text/plain + text/html) per due motivi: alcuni filtri antispam analizzano il testo plain e potrebbero non processare l'HTML con la stessa attenzione; alcuni client mail potrebbero visualizzare solo il testo plain e non mostrare il link HTML malevolo; avere entrambe le versioni aumenta la probabilita di passare i filtri di contenuto e di essere visualizzato correttamente su piu client.</p>
-<p><strong>4. Altri IoC:</strong></p>
-<ul>
-<li><p>Dominio giovane / sconosciuto: paypaI-security.com e un dominio di phishing registrato di recente.</p></li>
-<li><p>IP 91.108.4.200: range noto per hosting di infrastrutture malevole (verificabile su VirusTotal/Talos).</p></li>
-<li><p>Reply-To diverso dal From: le risposte vanno a security@paypaI-security.com, non a paypal.com.</p></li>
-<li><p>Oggetto urgente: 'limited', 'suspended' sono leve classiche di social engineering.</p></li>
-<li><p>URL non HTTPS: http:// (non cifrato) per una pagina di 'verifica' finanziaria e anomalo.</p></li>
-<li><p>Message-ID dal dominio phishing: &lt;abc@paypaI-security.com&gt; - normalmente un Message-ID legittimo di PayPal avrebbe @paypal.com.</p></li>
-</ul>
-<p><strong>5. Verifica sicura dell'URL:</strong></p>
-<ul>
-<li><p>NON aprire direttamente nel browser: rischio drive-by download.</p></li>
-<li><p>VirusTotal: incollare l'URL su virustotal.com per verifica con 70+ scanner.</p></li>
-<li><p>Cisco Talos / URLhaus: verifica reputazione del dominio.</p></li>
-<li><p>WHOIS: data di registrazione del dominio (se registrato di recente = sospetto).</p></li>
-<li><p>Browser sandboxing: aprire in una VM isolata o usare any.run / urlscan.io per analisi dinamica.</p></li>
-<li><p>Ispezione manuale: analizzare il codice sorgente della pagina senza eseguire JavaScript.</p></li>
-</ul></td>
-</tr>
-</tbody>
-</table>
+> **Esercizio 5 - Analisi completa di un'e-mail sospetta**
+>
+> Un utente riceve la seguente e-mail. Analizzare la struttura tecnica e identificare tutti gli elementi rilevanti per la sicurezza.
+>
+> ```
+> Received: from smtp.paypaI-security.com (smtp.paypaI-security.com [91.108.4.200])
+> by mx.victim.com with ESMTP;
+> Mon, 9 May 2026 14:33:01 +0000
+> MIME-Version: 1.0
+> Content-Type: multipart/alternative; boundary="boundary123"
+> From: PayPal Security 
+> Reply-To: security@paypaI-security.com
+> Subject: Your account has been limited
+> Authentication-Results: mx.victim.com;
+> spf=none dkim=none dmarc=none
+> Message-ID: 
+> --boundary123
+> Content-Type: text/plain
+> Dear Customer, your account has been limited. Click here: http://paypaI-security.com/verify
+> --boundary123
+> Content-Type: text/html
+> Dear Customer, your account has been limited.
+> Click here to verify
+> --boundary123--
+> ```
+> Domande:
+>
+> - Identifica il typosquatting nel dominio del mittente e nell'URL.
+>
+> - Cosa indicano i risultati 'spf=none dkim=none dmarc=none'?
+>
+> - Il messaggio ha struttura multipart/alternative. Qual e la ragione tecnica di questa scelta da parte degli attaccanti?
+>
+> - Quali altri IoC (Indicators of Compromise) sono presenti?
+>
+> - Come verificheresti l'URL http://paypaI-security.com/verify prima di aprirlo?
+
+
+
+> **Soluzione**
+>
+> **1. Typosquatting:** Il dominio paypaI-security.com usa la lettera maiuscola 'I' (i maiuscola) al posto della lettera 'l' (elle minuscola) nella parola 'Paypal'. Molti font non distinguono visivamente 'I' da 'l'. Il dominio e completamente diverso da paypal.com ma visivamente quasi identico. La stessa sostituzione appare nel Reply-To e nell'URL del link. Questa tecnica si chiama IDN homograph attack o lookalike domain.
+>
+> **2. spf=none dkim=none dmarc=none:** Tutti e tre i valori 'none' indicano che il dominio paypal.com (o paypaI-security.com) non ha pubblicato record SPF, DKIM ne DMARC. In realta paypal.com ha tutti e tre configurati con p=reject: questi risultati 'none' si riferiscono al dominio falsificato (paypaI-security.com) che probabilmente non ha record DNS di autenticazione configurati, o il server ha verificato il dominio sbagliato. In ogni caso, l'assenza di autenticazione positiva per un'email da un grande provider finanziario e un forte segnale di allarme.
+>
+> **3. Struttura multipart/alternative:** Gli attaccanti usano multipart/alternative (text/plain + text/html) per due motivi: alcuni filtri antispam analizzano il testo plain e potrebbero non processare l'HTML con la stessa attenzione; alcuni client mail potrebbero visualizzare solo il testo plain e non mostrare il link HTML malevolo; avere entrambe le versioni aumenta la probabilita di passare i filtri di contenuto e di essere visualizzato correttamente su piu client.
+>
+> **4. Altri IoC:**
+>
+> - Dominio giovane / sconosciuto: paypaI-security.com e un dominio di phishing registrato di recente.
+>
+> - IP 91.108.4.200: range noto per hosting di infrastrutture malevole (verificabile su VirusTotal/Talos).
+>
+> - Reply-To diverso dal From: le risposte vanno a security@paypaI-security.com, non a paypal.com.
+>
+> - Oggetto urgente: 'limited', 'suspended' sono leve classiche di social engineering.
+>
+> - URL non HTTPS: http:// (non cifrato) per una pagina di 'verifica' finanziaria e anomalo.
+>
+> - Message-ID dal dominio phishing: <abc@paypaI-security.com> - normalmente un Message-ID legittimo di PayPal avrebbe @paypal.com.
+>
+> **5. Verifica sicura dell'URL:**
+>
+> - NON aprire direttamente nel browser: rischio drive-by download.
+>
+> - VirusTotal: incollare l'URL su virustotal.com per verifica con 70+ scanner.
+>
+> - Cisco Talos / URLhaus: verifica reputazione del dominio.
+>
+> - WHOIS: data di registrazione del dominio (se registrato di recente = sospetto).
+>
+> - Browser sandboxing: aprire in una VM isolata o usare any.run / urlscan.io per analisi dinamica.
+>
+> - Ispezione manuale: analizzare il codice sorgente della pagina senza eseguire JavaScript.
+
 
 # Bibliografia
 
