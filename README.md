@@ -1,5 +1,5 @@
 # networking-IT
-Repositoryper il manuale di reti in italiano. 
+Repository per il manuale di reti in italiano. 
 Questo manuale nasce dalla sintesi di lezioni svolte in diversi anni nelle mie attività di training per clienti aziendali privati.  
 
 # Licenza
