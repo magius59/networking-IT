@@ -140,7 +140,7 @@ prima di consentire l’invio della posta.
 
 ## Nota 
 
-## SASL è uno strato che aggiunge autenticazione (e opzionalmente sicurezza) ai protocolli di rete. In sostanza, SASL è il meccanismo che permette a SMTP di autenticare l’utente tramite metodi standard (LOGIN, PLAIN, ecc.), rendendo obbligatorio dimostrare la propria identità prima di inviare email.
+SASL è uno strato che aggiunge autenticazione (e opzionalmente sicurezza) ai protocolli di rete. In sostanza, SASL è il meccanismo che permette a SMTP di autenticare l’utente tramite metodi standard (LOGIN, PLAIN, ecc.), rendendo obbligatorio dimostrare la propria identità prima di inviare email.
 
 \
 STARTTLS
@@ -416,7 +416,7 @@ SMTP usa una comunicazione testuale basata su comandi ASCII. La versione moderna
 
 <table>
 <colgroup>
-<col style="width: 100%" />
+<col style="width: 100% align=left" />
 </colgroup>
 <thead>
 <tr>
